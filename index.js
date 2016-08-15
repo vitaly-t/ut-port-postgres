@@ -70,13 +70,13 @@ PostgreSqlPort.prototype.stop = function stop() {
 PostgreSqlPort.prototype.checkConnection = function checkConnection(checkReady) {
     if (!this.client) {
         throw errors.noConnection({
-            server: this.config.db && this.config.db.server,
+            host: this.config.db && this.config.db.host,
             database: this.config.db && this.config.db.database
         });
     }
     if (checkReady && !this.connectionReady) {
         throw errors.notReady({
-            server: this.config.db && this.config.db.server,
+            host: this.config.db && this.config.db.host,
             database: this.config.db && this.config.db.database
         });
     }
