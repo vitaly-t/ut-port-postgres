@@ -1,0 +1,42 @@
+{
+  "name": "ut-port-sql",
+  "version": "5.0.0",
+  "main": "./index.js",
+  "dependencies": {
+    "es6-promisify": "4.1.0",
+    "pg": "6.1.0"
+  },
+  "devDependencies": {
+    "ut-tools": "^5.5.3"
+  },
+  "peerDependencies": {
+    "ut-bus": "~5.4.6"
+  },
+  "scripts": {
+    "lint": "ut-lint .",
+    "release": "ut-release",
+    "changelog": "ut-changelog",
+    "check": "ut-check",
+    "cover": "ut-cover",
+    "lint-js": "ut-lint-js .",
+    "postpublish": "ut-postpublish",
+    "postversion": "ut-postversion",
+    "precommit": "ut-precommit",
+    "prepublish": "ut-prepublish",
+    "prepush": "ut-prepush",
+    "pretest": "ut-pretest",
+    "preversion": "ut-preversion",
+    "test": "ut-test",
+    "version": "ut-version",
+    "jenkins": "ut-jenkins",
+    "gitlab": "ut-gitlab"
+  },
+  "publishConfig": {
+    "registry": "https://nexus.softwaregroup-bg.com/repository/npm-internal"
+  },
+  "description": "UT Port PostgreSQL Module",
+  "repository": {
+    "type": "git",
+    "url": "git@git.softwaregroup-bg.com:ut5/ut-port-postgresql.git"
+  }
+}
