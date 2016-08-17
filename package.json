@@ -1,5 +1,5 @@
 {
-  "name": "ut-port-sql",
+  "name": "ut-port-postgres",
   "version": "5.4.0",
   "main": "./index.js",
   "dependencies": {
@@ -32,12 +32,10 @@
     "jenkins": "ut-jenkins",
     "gitlab": "ut-gitlab"
   },
-  "publishConfig": {
-    "registry": "https://nexus.softwaregroup-bg.com/repository/npm-internal"
-  },
   "description": "UT Port PostgreSQL Module",
   "repository": {
     "type": "git",
-    "url": "git@git.softwaregroup-bg.com:ut5/ut-port-postgresql.git"
-  }
+    "url": "git@github.com:softwaregroup-bg/ut-port-postgres.git"
+  },
+  "license": "Apache-2.0"
 }
