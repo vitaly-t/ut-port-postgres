@@ -24,6 +24,7 @@ function PostgreSqlPort() {
         paramsOutName: 'out',
         doc: false
     };
+    this.super = {};
     this.connection = null;
     this.retryTimeout = null;
 }
@@ -84,6 +85,20 @@ PostgreSqlPort.prototype.stop = function stop() {
     this.connection = null;
     Port.prototype.stop.apply(this, Array.prototype.slice.call(arguments));
 };
+
+function setPathProperty(object, fieldName, fieldValue) {
+    var path = fieldName.split('.');
+    fieldName = path.pop();
+    path.forEach(function(name) {
+        if (name) {
+            if (!(object[name] instanceof Object)) {
+                object[name] = {};
+            }
+            object = object[name];
+        }
+    });
+    object[fieldName] = fieldValue;
+}
 
 PostgreSqlPort.prototype.checkConnection = function(checkReady) {
     if (!this.connection) {
@@ -150,8 +165,12 @@ PostgreSqlPort.prototype.loadSchema = function(objectList) {
                     } else {
                         prev.source[cur.namespace] = '';
                     }
-                    if ((cur.type === 'P') && (cur.colid === 1) && (self.config.linkSP || (objectList && objectList[cur.full]))) {
-                        prev.parseList.push({source: cur.source, fileName: objectList && objectList[cur.full]});
+                    if ((cur.type === 'P') && (self.config.linkSP || (objectList && objectList[cur.full]))) {
+                        prev.parseList.push({
+                            source: cur.source,
+                            params: cur.params, name: '"' + cur.namespace + '"."' + cur.name + '"',
+                            fileName: objectList && objectList[cur.full]
+                        });
                     }
                     return prev;
                 }, schema);
@@ -245,7 +264,7 @@ PostgreSqlPort.prototype.updateSchema = function(schema) {
 
     function getAlterStatement(statement, fileName, objectName) {
         statement = preProcess(statement, fileName, objectName);
-        if (statement.trim().match(/^CREATE\s+TYPE/i)) {
+        if (statement.trim().match(/^(CREATE\s+TYPE)|(CREATE\s+OR\s+REPLACE\s)/i)) {
             return statement.trim();
         } else {
             return statement.trim().replace(/^CREATE /i, 'ALTER ');
@@ -494,33 +513,32 @@ PostgreSqlPort.prototype.callSP = function(name, params, flatten, fileName) {
         recurse(data, '');
         return result;
     }
-    function getValue(column, value, def, updated) {
-        if (updated) {
-            return updated;
-        }
-        if (value === undefined) {
-            return def;
-        } else if (value) {
-            if (/^(date.*|smalldate.*)$/.test(column.type.declaration)) {
-                // set a javascript date for 'date', 'datetime', 'datetime2' 'smalldatetime' and 'time'
-                return new Date(value);
-            } else if (column.type.declaration === 'time') {
-                return new Date('1970-01-01T' + value);
-                // } else if (column.type.declaration === 'xml') {
-                //     var obj = {};
-                //     obj[column.name] = value;
-                //     return xmlBuilder.buildObject(obj);
-            }
-        }
-        return value;
-    }
+    // function getValue(column, value, def, updated) {
+    //     if (updated) {
+    //         return updated;
+    //     }
+    //     if (value === undefined) {
+    //         return def;
+    //     } else if (value) {
+    //         if (/^(date.*|smalldate.*)$/.test(column.type.declaration)) {
+    //             // set a javascript date for 'date', 'datetime', 'datetime2' 'smalldatetime' and 'time'
+    //             return new Date(value);
+    //         } else if (column.type.declaration === 'time') {
+    //             return new Date('1970-01-01T' + value);
+    //             // } else if (column.type.declaration === 'xml') {
+    //             //     var obj = {};
+    //             //     obj[column.name] = value;
+    //             //     return xmlBuilder.buildObject(obj);
+    //         }
+    //     }
+    //     return value;
+    // }
     return function callLinkedSP(msg, $meta) {
         self.checkConnection(true);
-        var request = self.getRequest();
         var data = flattenMessage(msg, flatten);
         var debug = this.isDebug();
         var debugParams = {};
-        request.multiple = true;
+        var values = [];
         params && params.forEach(function(param) {
             var value;
             if (param.name === 'meta') {
@@ -530,11 +548,12 @@ PostgreSqlPort.prototype.callSP = function(name, params, flatten, fileName) {
             } else {
                 value = data[param.name];
             }
-            var hasValue = value !== void 0;
+            // var hasValue = value !== void 0;
             debug && (debugParams[param.name] = value);
             if (param.def && param.def.type === 'time') {
                 value = new Date('1970-01-01T' + value);
             }
+            values.push(value);
             // var typeXX = sqlType(param.def);
             // if (param.out) {
             //     request.output(param.name, type, value);
@@ -574,7 +593,7 @@ PostgreSqlPort.prototype.callSP = function(name, params, flatten, fileName) {
             //     }
             // }
         });
-        return request.execute(name)
+        return self.getRequest().then((request) => request.func(name, values)
             .then(function(resultsets) {
                 function isNamingResultSet(element) {
                     return Array.isArray(element) &&
@@ -660,17 +679,30 @@ PostgreSqlPort.prototype.callSP = function(name, params, flatten, fileName) {
                     errToThrow.stack = stack.join('\n');
                 }
                 throw errToThrow;
-            });
+            })
+        );
     };
 };
 
 PostgreSqlPort.prototype.linkSP = function(schema) {
     if (schema.parseList.length) {
-        var parserSP = require('./parsers/postgres');
+        // var parserSP = require('./parsers/postgres');
         schema.parseList.forEach(function(procedure) {
-            var binding = parserSP.parse(procedure.source);
-            var flatName = binding.name.replace(/[\[\]]/g, '');
-            if (binding && binding.type === 'procedure') {
+            // var binding = parserSP.parse(procedure.source);
+            var binding = {
+                name: procedure.name,
+                type: 'function',
+                params: procedure.params.split(', ').map((param) => {
+                    return {
+                        name: param.split(' ')[0].replace(/["]/g, ''),
+                        def: {
+                            type: param.split(' ')[1]
+                        }
+                    };
+                })
+            };
+            var flatName = binding.name.replace(/["]/g, '');
+            if (binding && binding.type === 'function') {
                 var update = [];
                 var flatten = false;
                 binding.params && binding.params.forEach(function(param) {
@@ -727,19 +759,66 @@ PostgreSqlPort.prototype.linkSP = function(schema) {
     return schema;
 };
 
-PostgreSqlPort.prototype.exec = function(msg) {
-    this.checkConnection(true);
-    var $meta = arguments.length && arguments[arguments.length - 1];
-    $meta.mtid = 'response';
-    if (this.config[$meta.method]) {
-        return this.config[$meta.method](msg, $meta);
-    } else if (msg.query) {
-        return this.getRequest().query(msg.query)
-            .then((result) => result.rows);
+PostgreSqlPort.prototype.exec = function(message) {
+    var $meta = (arguments.length && arguments[arguments.length - 1]);
+    var methodName = ($meta && $meta.method);
+    if (methodName) {
+        var method = this.config[methodName];
+        if (!method) {
+            methodName = methodName.split('/', 2);
+            method = methodName.length === 2 && this.config[methodName[1]];
+        }
+        if (method instanceof Function) {
+            return when.lift(method).apply(this, Array.prototype.slice.call(arguments));
+        }
     }
-    return Promise.reject(errors.missingQuery({
-        msg: msg
-    }));
+
+    this.checkConnection(true);
+
+    if (this.config.validate instanceof Function) {
+        this.config.validate(message);
+    }
+
+    // var start = +new Date();
+    var debug = this.isDebug();
+    return this.getRequest().then((request) =>
+        when.promise(function(resolve, reject) {
+            request.query(message.query, function(err, result) {
+                // var end = +new Date();
+                // var execTime = end - start;
+                // todo record execution time
+                if (err) {
+                    debug && (err.query = message.query);
+                    var error = uterror.get(err.message && err.message.split('\n').shift()) || errors.sql;
+                    reject(error(err));
+                } else {
+                    $meta.mtid = 'response';
+                    if (message.process === 'return') {
+                        if (result && result.length) {
+                            Object.keys(result[0]).forEach(function(value) {
+                                setPathProperty(message, value, result[0][value]);
+                            });
+                        }
+                        resolve(message);
+                    } else if (message.process === 'json') {
+                        message.dataSet = result;
+                        resolve(message);
+                    } else if (message.process === 'xls') { // todo
+                        reject(errors.notImplemented(message.process));
+                    } else if (message.process === 'xml') { // todo
+                        reject(errors.notImplemented(message.process));
+                    } else if (message.process === 'csv') { // todo
+                        reject(errors.notImplemented(message.process));
+                    } else if (message.process === 'processRows') { // todo
+                        reject(errors.notImplemented(message.process));
+                    } else if (message.process === 'queueRows') { // todo
+                        reject(errors.notImplemented(message.process));
+                    } else {
+                        reject(errors.missingProcess(message.process));
+                    }
+                }
+            });
+        }));
 };
 
 module.exports = PostgreSqlPort;
