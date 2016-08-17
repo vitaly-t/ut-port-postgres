@@ -226,13 +226,13 @@ PostgreSqlPort.prototype.updateSchema = function(schema) {
     this.checkConnection();
 
     function replaceAuditLog(statement) {
-        var parserSP = require('./parsers/mssqlSP');
+        var parserSP = require('./parsers/postgres');
         var binding = parserSP.parse(statement);
         return statement.trim().replace(AUDIT_LOG, queries.auditLog(binding));
     }
 
     function replaceCallParams(statement) {
-        var parserSP = require('./parsers/mssqlSP');
+        var parserSP = require('./parsers/postgres');
         var binding = parserSP.parse(statement);
         return statement.trim().replace(CALL_PARAMS, queries.callParams(binding));
     }
@@ -273,7 +273,7 @@ PostgreSqlPort.prototype.updateSchema = function(schema) {
 
     function tableToType(statement) {
         if (statement.match(/^CREATE\s+TABLE/i)) {
-            var parserSP = require('./parsers/mssqlSP');
+            var parserSP = require('./parsers/postgres');
             var binding = parserSP.parse(statement);
             if (binding.type === 'table') {
                 var name = binding.name.match(/\]$/) ? binding.name.slice(0, -1) + 'TT]' : binding.name + 'TT';
@@ -293,7 +293,7 @@ PostgreSqlPort.prototype.updateSchema = function(schema) {
     function tableToTTU(statement) {
         var result = '';
         if (statement.match(/^CREATE\s+TABLE/i)) {
-            var parserSP = require('./parsers/mssqlSP');
+            var parserSP = require('./parsers/postgres');
             var binding = parserSP.parse(statement);
             if (binding.type === 'table') {
                 var name = binding.name.match(/\]$/) ? binding.name.slice(0, -1) + 'TTU]' : binding.name + 'TTU';
@@ -316,7 +316,7 @@ PostgreSqlPort.prototype.updateSchema = function(schema) {
     function getSource(statement, fileName, objectName) {
         statement = preProcess(statement, fileName, objectName);
         if (statement.trim().match(/^CREATE\s+TYPE/i)) {
-            var parserSP = require('./parsers/mssqlSP');
+            var parserSP = require('./parsers/postgres');
             var binding = parserSP.parse(statement);
             if (binding && binding.type === 'table type') {
                 return binding.fields.map(fieldSource).join('\r\n');

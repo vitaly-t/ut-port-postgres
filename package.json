@@ -3,14 +3,15 @@
   "version": "5.4.0",
   "main": "./index.js",
   "dependencies": {
-    "es6-promisify": "4.1.0",
-    "pg-promise": "5.3.1"
+    "pg-promise": "5.3.1",
+    "ut-error": "^5.3.14",
+    "when": "3.7.7"
   },
   "devDependencies": {
-    "ut-tools": "^5.5.3"
+    "ut-tools": "^5.8.0"
   },
   "peerDependencies": {
-    "ut-bus": "~5.4.6"
+    "ut-bus": "~5.4.7"
   },
   "scripts": {
     "lint": "ut-lint .",
