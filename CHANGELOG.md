@@ -1,3 +1,13 @@
+<a name="5.5.0"></a>
+# [5.5.0](https://github.com/softwaregroup-bg/ut-port-postgres/compare/v5.4.2...v5.5.0) (2016-08-25)
+
+
+### Features
+
+* trim @ in parameter names ([f4fe59a](https://github.com/softwaregroup-bg/ut-port-postgres/commit/f4fe59a))
+
+
+
 <a name="5.4.2"></a>
 ## [5.4.2](https://github.com/softwaregroup-bg/ut-port-postgres/compare/v5.4.1...v5.4.2) (2016-08-25)
 
