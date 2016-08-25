@@ -24,8 +24,8 @@ The result returned by the port will be JSON with the following structure:
 
 ```json
 {
-    q1:[],
-    q2:[]
+    "q1":[],
+    "q2":[]
 }
 ```
 
