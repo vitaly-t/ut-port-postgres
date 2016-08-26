@@ -663,7 +663,12 @@ PostgreSqlPort.prototype.callSP = function(name, params, flatten, fileName) {
                         return prev;
                     }, {})]);
                 }
-                return resultsets;
+                if (resultsets && resultsets.length === 1 && resultsets[0].isSingleResult) {
+                    delete resultsets[0].isSingleResult;
+                    return resultsets[0];
+                } else {
+                    return resultsets;
+                }
             })
             .catch(function(err) {
                 var errorLines = err.message && err.message.split('\n');
