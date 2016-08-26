@@ -1,3 +1,13 @@
+<a name="5.6.0"></a>
+# [5.6.0](https://github.com/softwaregroup-bg/ut-port-postgres/compare/v5.5.0...v5.6.0) (2016-08-26)
+
+
+### Features
+
+* support single result ([b81c251](https://github.com/softwaregroup-bg/ut-port-postgres/commit/b81c251))
+
+
+
 <a name="5.5.0"></a>
 # [5.5.0](https://github.com/softwaregroup-bg/ut-port-postgres/compare/v5.4.2...v5.5.0) (2016-08-25)
 
