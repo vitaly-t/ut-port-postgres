@@ -82,13 +82,12 @@ PostgreSqlPort.prototype.stop = function stop() {
     this.retryTimeout && clearTimeout(this.retryTimeout);
     // this.queue.push();
     this.connectionReady = false;
-    //this.connection && this.connection.end();
+    // this.connection && this.connection.end();
     return new Promise((resolve, reject) => {
         Port.prototype.stop.apply(this, Array.prototype.slice.call(arguments));
-        pgp.pg.on('end', function(){
+        pgp.pg.on('end', function() {
             resolve();
-            console.log('pg ended');
-        })
+        });
         pgp.end();
         this.connection = null;
     });
