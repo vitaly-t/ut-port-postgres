@@ -82,8 +82,16 @@ PostgreSqlPort.prototype.stop = function stop() {
     this.retryTimeout && clearTimeout(this.retryTimeout);
     // this.queue.push();
     this.connectionReady = false;
-    this.connection = null;
-    Port.prototype.stop.apply(this, Array.prototype.slice.call(arguments));
+    //this.connection && this.connection.end();
+    return new Promise((resolve, reject) => {
+        Port.prototype.stop.apply(this, Array.prototype.slice.call(arguments));
+        pgp.pg.on('end', function(){
+            resolve();
+            console.log('pg ended');
+        })
+        pgp.end();
+        this.connection = null;
+    });
 };
 
 function setPathProperty(object, fieldName, fieldValue) {
@@ -201,6 +209,7 @@ PostgreSqlPort.prototype.loadSchema = function(objectList) {
                 Object.keys(schema.types).forEach(function(type) { // extract pseudo source code of user defined table types
                     schema.source[type] = schema.types[type].map(fieldSource).join('\r\n');
                 });
+                request.done();
                 return schema;
             });
         });
@@ -429,7 +438,11 @@ PostgreSqlPort.prototype.updateSchema = function(schema) {
                     when.reduce(queries, function(result, query) {
                         updated.push(query.objectName);
                         currentFileName = query.fileName;
-                        return self.getRequest().then((request) => request.query(query.content));
+                        return self.getRequest().then(
+                            (request) => request.query(query.content).then((res) => {
+                                request.done(); return res;
+                            })
+                        );
                     }, [])
                     .then(function() {
                         updated.length && self.log.info && self.log.info({
@@ -595,13 +608,13 @@ PostgreSqlPort.prototype.callSP = function(name, params, flatten, fileName) {
         });
         return self.getRequest().then((request) => request.func(name, values)
             .then(function(resultsets) {
+                request.done();
                 function isNamingResultSet(element) {
                     return Array.isArray(element) &&
                         element.length === 1 &&
                         element[0].hasOwnProperty('resultSetName') &&
                         typeof element[0].resultSetName === 'string';
                 }
-
                 if (resultsets.length > 0 && isNamingResultSet(resultsets[0])) {
                     var namedSet = {};
                     if (outParams.length) {
@@ -792,6 +805,7 @@ PostgreSqlPort.prototype.exec = function(message) {
                 // var end = +new Date();
                 // var execTime = end - start;
                 // todo record execution time
+                request.done();
                 if (err) {
                     debug && (err.query = message.query);
                     var error = uterror.get(err.message && err.message.split('\n').shift()) || errors.sql;
