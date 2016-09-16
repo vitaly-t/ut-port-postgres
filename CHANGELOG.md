@@ -1,3 +1,14 @@
+<a name="5.6.1"></a>
+## [5.6.1](https://github.com/softwaregroup-bg/ut-port-postgres/compare/v5.6.0...v5.6.1) (2016-09-16)
+
+
+### Bug Fixes
+
+* linting ([db6ebfc](https://github.com/softwaregroup-bg/ut-port-postgres/commit/db6ebfc))
+* release pool objects ([f3fe754](https://github.com/softwaregroup-bg/ut-port-postgres/commit/f3fe754))
+
+
+
 <a name="5.6.0"></a>
 # [5.6.0](https://github.com/softwaregroup-bg/ut-port-postgres/compare/v5.5.0...v5.6.0) (2016-08-26)
 
