@@ -133,7 +133,7 @@ PostgreSqlPort.prototype.tryConnect = function() {
         var req;
         return conCreate.connect()
         .then((con) => { req = con; })
-        .then(() => (req.query(queries.createDatabase, this.config.db.database)))
+        .then(() => (req.query(queries.createDatabase, this.config.db)))
         .then(() => (req.query(queries.createUser, this.config.db)))
         .then(() => req.done())
         .then(() => {
