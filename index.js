@@ -133,8 +133,8 @@ PostgreSqlPort.prototype.tryConnect = function() {
         var req;
         return conCreate.connect()
         .then((con) => { req = con; })
-        .then(() => (req.query(queries.createDatabase(this.config.db.database))))
-        .then(() => (req.query(queries.createUser(this.config.db.database, this.config.db.user, this.config.db.password))))
+        .then(() => (req.query(queries.createDatabase, this.config.db.database)))
+        .then(() => (req.query(queries.createUser, this.config.db)))
         .then(() => req.done())
         .then(() => {
             this.connection = pgp(this.config.db);
@@ -160,7 +160,7 @@ PostgreSqlPort.prototype.loadSchema = function(objectList) {
     this.checkConnection();
     return this.getRequest()
         .then((request) => {
-            return request.query(queries.loadSchema()).then(function(result) {
+            return request.query(queries.loadSchema).then(function(result) {
                 var schema = {source: {}, parseList: [], types: {}, deps: {}};
                 result.reduce(function(prev, cur) { // extract source code of procedures, views, functions, triggers
                     cur.namespace = cur.namespace && cur.namespace.toLowerCase();
